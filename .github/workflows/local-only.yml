@@ -1,0 +1,12 @@
+name: Local VM Heartbeat
+on: [push]
+
+jobs:
+  ping-my-vm:
+    # This matches the label you created in Step 2
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run Heartbeat Script
+        run: python3 local_heartbeat.py
