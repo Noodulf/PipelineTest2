@@ -45,7 +45,7 @@ jobs:
 
   # JOB 4: THE DEPLOYER (The Live Website)
   deploy:
-    needs: audit # Only deploy the report if the tests pass!
+    needs: [audit,test] # Only deploy the report if the tests pass!
     runs-on: ubuntu-latest
     environment:
       name: github-pages
