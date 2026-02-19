@@ -1,0 +1,46 @@
+name: Security and Deployment Pipeline
+
+on: [push]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  # Job 1: Security Audit
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Bandit Scan
+        run: |
+          pip install bandit
+          # Generate HTML report (ignore failure so we can still see the report)
+          bandit -r . -f html -o index.html || true 
+      - name: Upload Report
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.' # This uploads the index.html we just made
+
+  # Job 2: Run Tests
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Pytest
+        run: |
+          pip install pytest
+          pytest test_app.py
+
+  # Job 3: Deploy to GitHub Pages (Only if audit and test finish)
+  deploy:
+    needs: [audit, test]
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
