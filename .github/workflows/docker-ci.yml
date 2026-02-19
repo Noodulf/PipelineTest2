@@ -1,0 +1,39 @@
+name: Dockerized Quality Gate
+on: [push]
+
+jobs:
+  # JOB 1: THE BUILDER
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker Image
+        run: docker build -t monitor-app .
+
+  # JOB 2: THE AUDITOR (Depends on Build)
+  audit:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Security Scan
+        run: |
+          pip install bandit
+          # Generate report and continue even if bugs are found
+          bandit -r . -f html -o index.html || true
+      - name: Upload Security Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: index.html
+
+  # JOB 3: THE TESTER (Depends on Audit and Build)
+  test:
+    needs: [build, audit]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Re-build Image
+        run: docker build -t monitor-app .
+      - name: Run Pytest inside Docker
+        run: docker run --rm monitor-app pytest test_app.py

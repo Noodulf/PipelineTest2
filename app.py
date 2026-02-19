@@ -1,8 +1,19 @@
+from fastapi import FastAPI
 import os
 
-def vulnerable_function(user_data):
-    # This is a security risk! Bandit will catch this 'shell=True'
-    os.system(f"echo {user_data}") 
+app = FastAPI()
 
-def safe_add(a, b):
-    return a + b 
+@app.get("/")
+def read_root():
+    return {"status": "Monitor is Online"}
+
+@app.get("/health")
+def health_check():
+    return {"status": "healthy"}
+
+@app.get("/audit")
+def audit_site(url: str):
+    # INTENTIONAL BUG: Using os.system with user input is a security risk.
+    # This is here so Bandit (the auditor) has something to catch.
+    response = os.system(f"curl -I {url}")
+    return {"url": url, "result_code": response} 

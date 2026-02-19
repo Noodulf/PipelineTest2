@@ -1,4 +1,14 @@
-from app import safe_add
+from fastapi.testclient import TestClient
+from app import app
 
-def test_add():
-    assert safe_add(2, 3) == 5
+client = TestClient(app)
+
+def test_read_main():
+    response = client.get("/")
+    assert response.status_code == 200
+    assert response.json() == {"status": "Monitor is Online"}
+
+def test_health_check():
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json() == {"status": "healthy"}
